@@ -1,4 +1,3 @@
-# core/loader.py
 from __future__ import annotations
 import pandas as pd
 from typing import Tuple, Dict, Any, Optional
@@ -16,7 +15,6 @@ def load_dataframe(uploaded_file, sheet_name: Optional[str] = None) -> Tuple[pd.
         return df, meta
 
     if name.endswith(".xlsx") or name.endswith(".xls"):
-        # If sheet_name None -> first sheet
         xls = pd.ExcelFile(uploaded_file)
         chosen = sheet_name or xls.sheet_names[0]
         df = pd.read_excel(uploaded_file, sheet_name=chosen)
