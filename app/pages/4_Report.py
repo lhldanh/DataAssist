@@ -3,6 +3,14 @@ from __future__ import annotations
 import os
 import streamlit as st
 
+import asyncio
+import markdown as md
+from playwright.sync_api import sync_playwright
+import sys, asyncio
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
+
 st.title("Report")
 
 st.session_state.setdefault("charts", [])
@@ -20,6 +28,45 @@ if df is None:
 def append_section(title: str, content):
     st.session_state.setdefault("report_sections", [])
     st.session_state["report_sections"].append({"title": title, "content": content})
+
+def md_to_html(md_text: str) -> str:
+    body = md.markdown(md_text, extensions=["tables", "fenced_code"])
+    return f"""
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        body {{ font-family: Arial, sans-serif; padding: 24px; }}
+        h1,h2,h3 {{ margin-top: 20px; }}
+        img {{ max-width: 100%; height: auto; }}
+        table {{ border-collapse: collapse; width: 100%; }}
+        th, td {{ border: 1px solid #ccc; padding: 6px; }}
+        code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 4px; }}
+        pre code {{ display:block; padding:12px; }}
+      </style>
+    </head>
+    <body>{body}</body>
+    </html>
+    """
+
+def html_to_pdf_bytes(html: str) -> bytes:
+    # base_url để ảnh local artifacts/charts/... render được
+    base_url = "file:///" + os.getcwd().replace("\\", "/") + "/"
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.goto(base_url)
+        page.set_content(html, wait_until="load")
+
+        pdf_bytes = page.pdf(
+            format="A4",
+            print_background=True,
+            margin={"top": "20mm", "right": "15mm", "bottom": "20mm", "left": "15mm"},
+        )
+        browser.close()
+        return pdf_bytes
+
 
 
 def rebuild_report_md() -> str:
@@ -116,10 +163,23 @@ st.download_button(
     data=md_for_export,
     file_name="report.md",
     mime="text/markdown",
-    use_container_width=True
+    use_container_width=True,
+    key="dl_md",
 )
 
-st.caption("PDF export can be added later (Markdown → HTML → PDF).")
+html = md_to_html(md_for_export)
+with st.spinner("Rendering PDF..."):
+    pdf_bytes = html_to_pdf_bytes(html)
+
+st.download_button(
+    "⬇️ Download PDF",
+    data=pdf_bytes,
+    file_name="report.pdf",
+    mime="application/pdf",
+    use_container_width=True,
+    key="dl_pdf",
+)
+
 
 st.divider()
 
