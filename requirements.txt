@@ -1,0 +1,18 @@
+# Core Data Analysis
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Web Application
+streamlit>=1.30.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# LLM Client
+openai>=1.0.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Excel Support (for xlsx files)
+openpyxl>=3.1.0
