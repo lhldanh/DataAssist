@@ -1,4 +1,3 @@
-# app/pages/1_Profiling.py (or 2_Profiling.py)
 import streamlit as st
 
 from core.profiler import profile_dataset
